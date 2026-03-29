@@ -108,7 +108,7 @@ docker rmi arxuan123/ponv-depoly:latest arxuan123/ponv-depoly:${DATE_TAG}
 ```bash
 mkdir -p /root/ponv_data
 cd /root/ponv_data
-wget -O deploy.sh https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main/deploy.sh
+wget -O deploy.sh https://edgeone.gh-proxy.org/https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main/deploy.sh
 chmod +x deploy.sh
 ./deploy.sh
 ```
