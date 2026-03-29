@@ -62,6 +62,7 @@ npm install
 cp .env.example .env
 DATABASE_URL="mysql://用户名:密码@localhost:3306/数据库名"
 AUTH_SECRET="随机密钥字符串"
+AUTH_COOKIE_SECURE="false"  # HTTP 部署设为 false；HTTPS 部署建议 true
 
 # 3. 创建数据库（在 MySQL 中执行）
 # CREATE DATABASE ponv_system;
@@ -172,11 +173,12 @@ services:
     environment:
       DATABASE_URL: "mysql://ponv:你的数据库密码@mysql:3306/ponv_system"
       AUTH_SECRET: "修改为随机密钥"
+      AUTH_COOKIE_SECURE: "false" # HTTP 场景
 ```
 
 ### 方式四：一键部署脚本（推荐）
 
-项目根目录提供 `deploy.sh`，用于单机一键部署与更新。
+`deploy.sh` 可下载到 `/root/ponv_data` 目录，用于单机一键部署与更新。
 
 脚本会自动执行：
 - 从 GitHub 拉取最新 `docker-compose.yml` 到 `/root/ponv_data/docker-compose.yml`
@@ -188,9 +190,11 @@ services:
 使用方法：
 
 ```bash
+mkdir -p /root/ponv_data
+cd /root/ponv_data
 wget -O deploy.sh https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main/deploy.sh
 chmod +x deploy.sh
-sudo ./deploy.sh
+./deploy.sh
 ```
 
 部署完成后访问：

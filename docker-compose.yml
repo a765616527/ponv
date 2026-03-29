@@ -26,6 +26,7 @@ services:
     environment:
       DATABASE_URL: "mysql://ponv:ponv_pass@mysql:3306/ponv_system"
       AUTH_SECRET: "change-this-to-a-random-secret-string"
+      AUTH_COOKIE_SECURE: "false"
     depends_on:
       mysql:
         condition: service_healthy

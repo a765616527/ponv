@@ -104,9 +104,11 @@ docker rmi arxuan123/ponv-depoly:latest arxuan123/ponv-depoly:${DATE_TAG}
 ### 6.2 服务器一键部署
 
 ```bash
+mkdir -p /root/ponv_data
+cd /root/ponv_data
 wget -O deploy.sh https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main/deploy.sh
 chmod +x deploy.sh
-sudo ./deploy.sh
+./deploy.sh
 ```
 
 ## 7. 协作建议

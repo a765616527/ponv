@@ -26,6 +26,7 @@
 - 修复评估详情页面检查类型文案乱码（`无痛肠镜`）。
 - 修复 `prisma/seed.js` 触发的 ESLint 报错。
 - 修复容器启动 `npx prisma db push` 报错 `ENOENT ... prisma_schema_build_bg.wasm` 与 Prisma CLI 运行时依赖缺失问题（通过运行层完整生产依赖提供 Prisma CLI 所需模块）。
+- 修复 HTTP 部署登录后 `session` 始终为 `null` 的问题：认证 Cookie 的 `secure` 属性改为可通过 `AUTH_COOKIE_SECURE` 显式配置（HTTP 设为 `false`，HTTPS 建议 `true`）。
 
 ### Docs
 

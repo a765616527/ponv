@@ -6,6 +6,20 @@ const SECRET = new TextEncoder().encode(
 );
 const COOKIE_NAME = "ponv-token";
 
+function parseBooleanEnv(value: string | undefined): boolean | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return null;
+}
+
+export function getAuthCookieSecure(): boolean {
+  const configured = parseBooleanEnv(process.env.AUTH_COOKIE_SECURE);
+  if (configured !== null) return configured;
+  return process.env.NODE_ENV === "production";
+}
+
 export interface UserPayload {
   id: string;
   username: string;
