@@ -186,6 +186,7 @@ services:
 使用方法：
 
 ```bash
+wget -O deploy.sh https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main/deploy.sh
 chmod +x deploy.sh
 sudo ./deploy.sh
 ```
