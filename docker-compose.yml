@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ponv-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ponv_root_pass
+      MYSQL_DATABASE: ponv_system
+      MYSQL_USER: ponv
+      MYSQL_PASSWORD: ponv_pass
+    volumes:
+      - /root/ponv_data/mysql:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: arxuan123/ponv-depoly:latest
+    container_name: ponv-app
+    restart: unless-stopped
+    ports:
+      - "5700:3000"
+    environment:
+      DATABASE_URL: "mysql://ponv:ponv_pass@mysql:3306/ponv_system"
+      AUTH_SECRET: "change-this-to-a-random-secret-string"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: ponv-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --label-enable --cleanup --interval 60

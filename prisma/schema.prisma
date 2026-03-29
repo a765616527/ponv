@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ASSESSOR
+  ANESTHETIST
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  EXTREME
+}
+
+enum AssessmentStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String
+  role      Role     @default(ASSESSOR)
+  createdAt DateTime @default(now())
+
+  assessments         Assessment[] @relation("Assessor")
+  handledAssessments  Assessment[] @relation("Anesthetist")
+}
+
+model Assessment {
+  id              Int              @id @default(autoincrement())
+  patientName     String
+  gender          Gender
+  age             Int
+  medicalRecordNo String
+  weight          Float
+  examType        String
+  examDate        DateTime
+
+  isFemale                 Boolean @default(false)
+  hasMotionSicknessHistory Boolean @default(false)
+  isNonSmoker              Boolean @default(false)
+  usedOpioids              Boolean @default(false)
+  coreScore                Int     @default(0)
+
+  durationOver60Min Boolean @default(false)
+  preOpAnxiety      Boolean @default(false)
+
+  riskLevel      RiskLevel
+  recommendation String           @db.Text
+  status         AssessmentStatus @default(PENDING)
+  notes          String?          @db.Text
+
+  assessorId     Int
+  assessor       User @relation("Assessor", fields: [assessorId], references: [id])
+
+  anesthetistId  Int?
+  anesthetist    User? @relation("Anesthetist", fields: [anesthetistId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

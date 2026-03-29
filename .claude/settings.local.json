@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma:*)",
+      "Bash(mysql:*)",
+      "Bash(node prisma/seed.js)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install:*)"
+    ]
+  }
+}
