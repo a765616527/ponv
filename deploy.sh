@@ -90,10 +90,11 @@ run_init_admin_with_retry() {
   local init_exit_code
 
   for attempt in $(seq 1 "${max_retries}"); do
-    set +e
-    init_output="$(run_init_admin "${init_username}" "${init_password}" "${init_name}" 2>&1)"
-    init_exit_code=$?
-    set -e
+    if init_output="$(run_init_admin "${init_username}" "${init_password}" "${init_name}" 2>&1)"; then
+      init_exit_code=0
+    else
+      init_exit_code=$?
+    fi
 
     if [[ "${init_exit_code}" -eq 0 || "${init_exit_code}" -eq 2 ]]; then
       if [[ -n "${init_output}" ]]; then
