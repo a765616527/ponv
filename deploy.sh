@@ -2,10 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 DATA_DIR="/root/ponv_data"
 MYSQL_DATA_DIR="${DATA_DIR}/mysql"
 SECRET_FILE="${DATA_DIR}/auth_secret"
+COMPOSE_FILE="${DATA_DIR}/docker-compose.yml"
 RAW_BASE_URL="https://raw.githubusercontent.com/a765616527/ponv/refs/heads/main"
 COMPOSE_URL="${RAW_BASE_URL}/docker-compose.yml"
 
@@ -35,10 +35,9 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 echo "拉取部署配置文件..."
-download_file "${COMPOSE_URL}" "${COMPOSE_FILE}"
-
 mkdir -p "${MYSQL_DATA_DIR}"
 chmod 700 "${DATA_DIR}" "${MYSQL_DATA_DIR}" || true
+download_file "${COMPOSE_URL}" "${COMPOSE_FILE}"
 
 if [[ -f "${SECRET_FILE}" ]]; then
   AUTH_SECRET="$(tr -d '\r\n' < "${SECRET_FILE}")"

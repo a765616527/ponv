@@ -179,7 +179,7 @@ services:
 项目根目录提供 `deploy.sh`，用于单机一键部署与更新。
 
 脚本会自动执行：
-- 从 GitHub 拉取最新 `docker-compose.yml`
+- 从 GitHub 拉取最新 `docker-compose.yml` 到 `/root/ponv_data/docker-compose.yml`
 - 创建数据目录 `/root/ponv_data/mysql`
 - 生成随机 `AUTH_SECRET`（首次），并持久化到 `/root/ponv_data/auth_secret`
 - 将 `AUTH_SECRET` 回写到 `docker-compose.yml`，避免后续更新时丢失
