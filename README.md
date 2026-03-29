@@ -93,6 +93,7 @@ npm run dev
 - 通过环境变量注入 `DATABASE_URL` 与 `AUTH_SECRET`。
 - 首次上线后请立即修改默认账号密码。
 - 若曾泄露密钥，请立即轮换数据库密码和 `AUTH_SECRET`。
+- 镜像发布约定见 `DOCKER_RELEASE_POLICY.md`（必须同时推送 `latest` + `YYYYMMDD`，且推送后删除本地镜像）。
 
 ### 方式一：直接部署
 
