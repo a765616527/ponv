@@ -25,6 +25,7 @@
 - 修复前端多个页面对 API 异常缺少处理导致的“加载中卡住”问题（仪表盘、评估列表、评估详情、用户管理）。
 - 修复评估详情页面检查类型文案乱码（`无痛肠镜`）。
 - 修复 `prisma/seed.js` 触发的 ESLint 报错。
+- 修复容器启动 `npx prisma db push` 报错 `ENOENT ... prisma_schema_build_bg.wasm` 与 Prisma CLI 运行时依赖缺失问题（通过运行层完整生产依赖提供 Prisma CLI 所需模块）。
 
 ### Docs
 

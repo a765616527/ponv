@@ -7,6 +7,13 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 RUN npm ci
 
+# 生产依赖（用于运行时，包含 Prisma CLI 依赖）
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma/
+RUN npm ci --omit=dev
+
 # 构建
 FROM base AS builder
 WORKDIR /app
@@ -29,13 +36,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Prisma 相关文件
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-
-# bcryptjs（seed 脚本需要）
-COPY --from=deps /app/node_modules/bcryptjs ./node_modules/bcryptjs
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 # 入口脚本
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
