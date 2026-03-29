@@ -79,6 +79,42 @@ run_init_admin() {
   "${exec_args[@]}"
 }
 
+run_init_admin_with_retry() {
+  local init_username="${1:-}"
+  local init_password="${2:-}"
+  local init_name="${3:-}"
+  local max_retries=20
+  local retry_delay=3
+  local attempt
+  local init_output
+  local init_exit_code
+
+  for attempt in $(seq 1 "${max_retries}"); do
+    set +e
+    init_output="$(run_init_admin "${init_username}" "${init_password}" "${init_name}" 2>&1)"
+    init_exit_code=$?
+    set -e
+
+    if [[ "${init_exit_code}" -eq 0 || "${init_exit_code}" -eq 2 ]]; then
+      if [[ -n "${init_output}" ]]; then
+        echo "${init_output}"
+      fi
+      return "${init_exit_code}"
+    fi
+
+    if [[ "${attempt}" -lt "${max_retries}" ]]; then
+      echo "管理员初始化暂未成功，等待后重试 (${attempt}/${max_retries})..."
+      sleep "${retry_delay}"
+      continue
+    fi
+
+    if [[ -n "${init_output}" ]]; then
+      echo "${init_output}"
+    fi
+    return "${init_exit_code}"
+  done
+}
+
 wait_for_app_exec() {
   echo "等待应用容器就绪..."
   for i in $(seq 1 60); do
@@ -91,6 +127,48 @@ wait_for_app_exec() {
 
   echo "应用容器长时间未就绪，请检查日志。"
   docker compose -f "${COMPOSE_FILE}" logs --tail=80 app || true
+  exit 1
+}
+
+wait_for_mysql_from_app() {
+  echo "等待应用容器内 MySQL 可连接..."
+  for i in $(seq 1 60); do
+    if docker compose -f "${COMPOSE_FILE}" exec -T app node -e "
+      const net = require('net');
+      const rawUrl = process.env.DATABASE_URL || '';
+      let host = 'mysql';
+      let port = 3306;
+
+      try {
+        const parsed = new URL(rawUrl);
+        if (parsed.hostname) host = parsed.hostname;
+        if (parsed.port) port = Number(parsed.port);
+      } catch {}
+
+      if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+        port = 3306;
+      }
+
+      const socket = net.connect({ host, port });
+      socket.setTimeout(2000);
+      socket.on('connect', () => {
+        socket.end();
+        process.exit(0);
+      });
+      socket.on('timeout', () => {
+        socket.destroy();
+        process.exit(1);
+      });
+      socket.on('error', () => process.exit(1));
+    " >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "  MySQL 暂不可连接，重试 ($i/60)..."
+    sleep 2
+  done
+
+  echo "应用容器内仍无法连接 MySQL，请检查日志。"
+  docker compose -f "${COMPOSE_FILE}" logs --tail=80 mysql app || true
   exit 1
 }
 
@@ -136,9 +214,10 @@ docker compose -f "${COMPOSE_FILE}" pull
 docker compose -f "${COMPOSE_FILE}" up -d
 
 wait_for_app_exec
+wait_for_mysql_from_app
 
 set +e
-run_init_admin
+run_init_admin_with_retry
 init_exit_code=$?
 set -e
 
@@ -149,7 +228,14 @@ case "${init_exit_code}" in
   2)
     echo "未检测到管理员账号，开始交互式初始化管理员。"
     prompt_admin_credentials
-    run_init_admin "${ADMIN_USERNAME}" "${ADMIN_PASSWORD}" "${ADMIN_NAME}"
+    set +e
+    run_init_admin_with_retry "${ADMIN_USERNAME}" "${ADMIN_PASSWORD}" "${ADMIN_NAME}"
+    init_exit_code=$?
+    set -e
+    if [[ "${init_exit_code}" -ne 0 ]]; then
+      echo "管理员初始化失败，请检查容器日志。"
+      exit "${init_exit_code}"
+    fi
     echo "管理员初始化完成。"
     unset ADMIN_PASSWORD ADMIN_PASSWORD_CONFIRM
     ;;
