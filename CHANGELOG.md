@@ -27,11 +27,13 @@
 - 修复 `prisma/seed.js` 触发的 ESLint 报错。
 - 修复容器启动 `npx prisma db push` 报错 `ENOENT ... prisma_schema_build_bg.wasm` 与 Prisma CLI 运行时依赖缺失问题（通过运行层完整生产依赖提供 Prisma CLI 所需模块）。
 - 修复 HTTP 部署登录后 `session` 始终为 `null` 的问题：认证 Cookie 的 `secure` 属性改为可通过 `AUTH_COOKIE_SECURE` 显式配置（HTTP 设为 `false`，HTTPS 建议 `true`）。
+- 修复容器重复初始化默认账号的问题：移除启动阶段自动 `seed`，避免管理员账号被重复创建。
 
 ### Docs
 
 - 更新 `README.md`：同步最新风险分级规则、权限策略、环境变量配置流程和生产安全建议。
 - 新增一键部署脚本教程，补充 `5700` 端口、MySQL 内网访问与数据落盘目录说明。
+- 补充管理员初始化说明：部署脚本在无管理员时会交互式输入账号密码并初始化。
 
 ### Ops
 
@@ -45,3 +47,4 @@
   - 首次生成随机 `AUTH_SECRET`
   - 将 `AUTH_SECRET` 持久化到 `/root/ponv_data/auth_secret`
   - 自动回写 `docker-compose.yml`，避免更新后密钥丢失
+  - 在数据库无管理员账号时，交互式创建首个管理员账号（幂等，后续不会重复创建）

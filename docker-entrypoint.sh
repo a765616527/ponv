@@ -47,8 +47,5 @@ fi
 echo "Running database migrations..."
 npx prisma db push --skip-generate
 
-echo "Seeding default data..."
-node prisma/seed.js
-
 echo "Starting application..."
 exec "$@"

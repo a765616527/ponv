@@ -70,8 +70,8 @@ AUTH_COOKIE_SECURE="false"  # HTTP 部署设为 false；HTTPS 部署建议 true
 # 4. 推送表结构到数据库
 npx prisma db push
 
-# 5. 创建默认用户
-node prisma/seed.js
+# 5. 初始化管理员账号（首次）
+INIT_ADMIN_USERNAME="admin" INIT_ADMIN_PASSWORD="请改成强密码" node prisma/init-admin.js
 
 # 6. 启动开发服务器
 npm run dev
@@ -79,20 +79,18 @@ npm run dev
 
 访问 http://localhost:3000
 
-### 默认账号
+### 管理员初始化
 
-| 用户名 | 密码 | 角色 | 说明 |
-|--------|------|------|------|
-| admin | 123456 | 管理员 | 全部权限 |
-| assessor1 | 123456 | 评估人员 | 创建评估、查看本人评估单 |
-| doctor1 | 123456 | 麻醉医生 | 查看评估、标记处理状态、维护备注 |
+- 项目不再自动导入固定种子账号。
+- 首次部署后，请通过 `prisma/init-admin.js` 初始化管理员账号。
+- 若数据库中已存在 `ADMIN` 角色用户，再次执行初始化会自动跳过，不会重复创建。
 
 ## 生产部署
 
 生产建议：
 - 使用独立的生产数据库与最小权限账号。
 - 通过环境变量注入 `DATABASE_URL` 与 `AUTH_SECRET`。
-- 首次上线后请立即修改默认账号密码。
+- 首次上线时请先初始化管理员账号，并使用强密码。
 - 若曾泄露密钥，请立即轮换数据库密码和 `AUTH_SECRET`。
 - 镜像发布约定见 `DOCKER_RELEASE_POLICY.md`（必须同时推送 `latest` + `YYYYMMDD`，且推送后删除本地镜像）。
 
@@ -107,7 +105,7 @@ AUTH_SECRET="生产环境请使用强随机密钥"
 
 # 3. 初始化数据库
 npx prisma db push
-node prisma/seed.js
+INIT_ADMIN_USERNAME="admin" INIT_ADMIN_PASSWORD="请改成强密码" node prisma/init-admin.js
 
 # 4. 构建
 npm run build
@@ -151,7 +149,7 @@ docker compose down
 docker compose down -v
 ```
 
-启动后访问 http://localhost:5700，应用会自动完成数据库初始化和默认用户创建。
+启动后访问 http://localhost:5700，应用会自动完成数据库表迁移。管理员账号请在首次部署时初始化。
 
 #### 自定义配置
 
@@ -186,6 +184,7 @@ services:
 - 生成随机 `AUTH_SECRET`（首次），并持久化到 `/root/ponv_data/auth_secret`
 - 将 `AUTH_SECRET` 回写到 `docker-compose.yml`，避免后续更新时丢失
 - 拉取镜像并启动服务（`docker compose pull && docker compose up -d`）
+- 若数据库中尚无管理员账号，脚本会交互式输入管理员账号/密码并完成初始化
 
 使用方法：
 
@@ -239,5 +238,6 @@ src/
 └── types/                    # 类型定义
 prisma/
 ├── schema.prisma             # 数据模型
-└── seed.js                   # 种子数据
+├── init-admin.js             # 管理员初始化脚本（幂等）
+└── seed.js                   # 历史种子脚本（默认部署不使用）
 ```

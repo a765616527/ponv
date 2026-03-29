@@ -56,7 +56,7 @@ npm run build
 
 ```bash
 npm run db:push
-npm run db:seed
+INIT_ADMIN_USERNAME="admin" INIT_ADMIN_PASSWORD="请改成强密码" npm run db:init-admin
 ```
 
 开发调试：
@@ -74,11 +74,13 @@ npm run dev
 3. 首次生成随机 `AUTH_SECRET`，持久化到 `/root/ponv_data/auth_secret`
 4. 将该 `AUTH_SECRET` 回写到 `docker-compose.yml`
 5. 执行 `docker compose pull && docker compose up -d`
+6. 若数据库中不存在管理员账号，交互式输入管理员账号/密码并初始化
 
 说明：
 - 本项目按“单实例”前提运行。
 - MySQL 只在容器网络内访问，不做宿主机端口映射。
 - `watchtower` 通过容器 label 自动监控并更新应用镜像。
+- 容器常规启动仅做迁移，不再自动导入 seed 种子数据。
 
 ## 5. 代码改动后的最低交付标准
 
