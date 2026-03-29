@@ -38,6 +38,7 @@
 - MySQL 数据卷改为宿主机目录 `/root/ponv_data/mysql`。
 - 新增 `watchtower` 服务（`nickfedor/watchtower`）自动监控并更新应用镜像。
 - 新增 `deploy.sh` 一键部署脚本：
+  - 部署前自动从 GitHub 拉取最新 `docker-compose.yml`
   - 自动创建 `/root/ponv_data/mysql`
   - 首次生成随机 `AUTH_SECRET`
   - 将 `AUTH_SECRET` 持久化到 `/root/ponv_data/auth_secret`
