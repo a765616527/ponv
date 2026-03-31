@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { riskLevelLabel, riskLevelColor, type RiskLevel } from "@/lib/risk";
+import { toast } from "sonner";
 
 interface Assessment {
   id: number;
@@ -43,6 +44,36 @@ export default function AssessmentsPage() {
   const [list, setList] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/assessments/export");
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || "导出失败");
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("content-disposition");
+      const fileNameMatch = disposition?.match(/filename\*=UTF-8''([^;]+)/i);
+      const fileName = fileNameMatch?.[1] ? decodeURIComponent(fileNameMatch[1]) : "assessments.xls";
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "导出失败");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -77,7 +108,12 @@ export default function AssessmentsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl md:text-2xl font-bold">评估列表</h2>
-        <span className="text-sm text-muted-foreground">共 {list.length} 条</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">共 {list.length} 条</span>
+          <Button variant="outline" size="sm" onClick={() => void handleExport()} disabled={exporting}>
+            {exporting ? "导出中..." : "导出Excel"}
+          </Button>
+        </div>
       </div>
 
       {list.length === 0 ? (
