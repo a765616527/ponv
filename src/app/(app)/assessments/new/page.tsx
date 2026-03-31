@@ -61,6 +61,24 @@ export default function NewAssessmentPage() {
     isNonSmoker: false, usedOpioids: false,
   });
 
+  const resetForm = () => {
+    setPatientName("");
+    setGender("");
+    setAge("");
+    setMedicalRecordNo("");
+    setWeight("");
+    setExamType("");
+    setExamDate("");
+    setDurationOver60Min(false);
+    setPreOpAnxiety(false);
+    setCore({
+      isFemale: false,
+      hasMotionSicknessHistory: false,
+      isNonSmoker: false,
+      usedOpioids: false,
+    });
+  };
+
   const coreScore = calculateCoreScore(core);
   const additionalRiskCount = calculateAdditionalRiskCount({
     durationOver60Min,
@@ -94,7 +112,7 @@ export default function NewAssessmentPage() {
       });
       if (!res.ok) throw new Error("创建失败");
       toast.success("评估单创建成功");
-      router.push("/assessments");
+      resetForm();
     } catch {
       toast.error("创建失败，请重试");
     } finally {

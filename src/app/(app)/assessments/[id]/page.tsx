@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +37,11 @@ interface AssessmentDetail {
   createdAt: string;
 }
 
+interface AssessmentListItem {
+  id: number;
+  status: string;
+}
+
 const statusLabel: Record<string, string> = {
   PENDING: "待处理",
   IN_PROGRESS: "处理中",
@@ -51,6 +56,53 @@ export default function AssessmentDetailPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoJumpTimerRef = useRef<number | null>(null);
+
+  const parseCurrentId = () => {
+    const raw = params.id;
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    const num = Number.parseInt(String(value), 10);
+    return Number.isNaN(num) ? null : num;
+  };
+
+  const jumpToNextAssessment = async () => {
+    const currentId = parseCurrentId();
+    if (!currentId) return;
+
+    try {
+      const res = await fetch("/api/assessments", { cache: "no-store" });
+      if (!res.ok) throw new Error("获取评估列表失败");
+      const payload = (await res.json()) as unknown;
+      const list = Array.isArray(payload) ? (payload as AssessmentListItem[]) : [];
+      const pendingList = list.filter((item) => item.status !== "COMPLETED");
+
+      if (pendingList.length === 0) {
+        toast.success("当前没有待处理评估，已返回评估列表");
+        router.push("/assessments");
+        return;
+      }
+
+      const next = pendingList.find((item) => item.id !== currentId);
+      if (!next) {
+        toast.success("当前没有其他待处理评估，已返回评估列表");
+        router.push("/assessments");
+        return;
+      }
+
+      router.push(`/assessments/${next.id}`);
+    } catch {
+      toast.error("自动跳转下一位失败");
+    }
+  };
+
+  const scheduleNextAssessmentJump = () => {
+    if (autoJumpTimerRef.current) {
+      window.clearTimeout(autoJumpTimerRef.current);
+    }
+    autoJumpTimerRef.current = window.setTimeout(() => {
+      void jumpToNextAssessment();
+    }, 3000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +129,14 @@ export default function AssessmentDetailPage() {
     };
   }, [params.id]);
 
+  useEffect(() => {
+    return () => {
+      if (autoJumpTimerRef.current) {
+        window.clearTimeout(autoJumpTimerRef.current);
+      }
+    };
+  }, []);
+
   const updateStatus = async (status: string) => {
     setSaving(true);
     try {
@@ -88,7 +148,12 @@ export default function AssessmentDetailPage() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setData(updated);
-      toast.success(status === "COMPLETED" ? "已标记完成" : "已开始处理");
+      if (status === "COMPLETED") {
+        toast.success("已标记完成，3秒后自动跳转下一位");
+        scheduleNextAssessmentJump();
+      } else {
+        toast.success("已开始处理");
+      }
     } catch {
       toast.error("操作失败");
     } finally {
